@@ -28,16 +28,20 @@ options.add_argument("--no-sandbox")
 options.add_argument("--disable-setuid-sandbox")
 options.add_argument("--remote-debugging-port=9222")  # this
 
-seen_lakik = []
+current_lakik = []
+
+if not os.path.exists('lakik.txt'):
+    file = open('lakik.txt', 'w')
+    file.close()
 
 
 def check_lakik():
-    # current lakik are empty, we are yet to see them
-    global seen_lakik
-    current_lakik = []
-
     # print what we are doing
     print(f'Checking lakis: {datetime.now().strftime("%Y/%M/%d - %H:%M")}')
+
+    # load laki names we have seen
+    with open('lakik.txt', 'r') as f:
+        seen_lakik = f.read().splitlines()
 
     # make driver
     driver = webdriver.Chrome('/usr/bin/chromedriver', options=options)
@@ -73,11 +77,10 @@ def check_lakik():
                 # add it to the current lakik
                 current_lakik.append(laki_id)
 
-                # if there was no laki txt then do not send notification about every current laki
                 # if we have not seen this laki sent notification
-                if len(seen_lakik) and laki_id not in seen_lakik:
+                if laki_id not in seen_lakik:
                     print(f'\tNew laki: {laki_id}')
-                    pn.send_notification(f'Uj laki {int(price / 1000)}k-ert, ({element_url})', f'{element_url}', silent=False, devices=devices)
+                    pn.send_notification(f'Uj laki {int(price / 1000)}k-ert,    \n{element_url}', f'{element_url}', silent=False, devices=devices)
 
         # go to next page or exit
         page_buttons = driver.find_elements(By.CLASS_NAME, 'pagination__button')
@@ -89,8 +92,10 @@ def check_lakik():
     # close the browser
     driver.close()
 
-    # save current lakik to seen lakik
-    seen_lakik = current_lakik
+    # save currently available lakis
+    with open('lakik.txt', 'w') as f:
+        for laki in current_lakik:
+            f.write(f"{laki}\n")
 
 
 while True:
