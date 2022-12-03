@@ -3,6 +3,7 @@ import time
 import re
 import warnings
 from datetime import datetime
+from tqdm import tqdm
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
@@ -31,11 +32,14 @@ options.add_argument("--remote-debugging-port=9222")  # this
 current_lakik = []
 
 if not os.path.exists('lakik.txt'):
+    did_lakistxt_exist = False
     file = open('lakik.txt', 'w')
     file.close()
 
 
 def check_lakik():
+    global did_lakistxt_exist
+
     # print what we are doing
     print(f'Checking lakis: {datetime.now().strftime("%Y/%M/%d - %H:%M")}')
 
@@ -53,12 +57,15 @@ def check_lakik():
     except TimeoutException:
         print('No pop-up loaded')
 
+    page = 0
     while True:
         # get the ads from the site
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "resultspage__listings")))
         elements = driver.find_elements(By.CLASS_NAME, "listing__card ")
 
-        for element in elements:
+        page += 1
+        print(f'Checking page: {page}')
+        for element in tqdm(elements):
             # wait for the page to be available
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "resultspage__container")))
 
@@ -80,7 +87,8 @@ def check_lakik():
                 # if we have not seen this laki sent notification
                 if laki_id not in seen_lakik:
                     print(f'\tNew laki: {laki_id}')
-                    pn.send_notification(f'Uj laki {int(price / 1000)}k-ert,    \n{element_url}', f'{element_url}', silent=False, devices=devices)
+                    if did_lakistxt_exist:
+                        pn.send_notification(f'Uj laki {int(price / 1000)}k-ert,    \n{element_url}', f'{element_url}', silent=False, devices=devices)
 
         # go to next page or exit
         page_buttons = driver.find_elements(By.CLASS_NAME, 'pagination__button')
@@ -96,8 +104,10 @@ def check_lakik():
     with open('lakik.txt', 'w') as f:
         for laki in current_lakik:
             f.write(f"{laki}\n")
+        did_lakistxt_exist = True
 
 
 while True:
     check_lakik()
+    print('Waiting for 5 minutes.')
     time.sleep(5 * 60)  # wait 5 minute
