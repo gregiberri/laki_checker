@@ -35,6 +35,8 @@ if not os.path.exists('lakik.txt'):
     did_lakistxt_exist = False
     file = open('lakik.txt', 'w')
     file.close()
+else:
+    did_lakistxt_exist = True
 
 
 def check_lakik():
@@ -109,5 +111,5 @@ def check_lakik():
 
 while True:
     check_lakik()
-    print('Waiting for 5 minutes.')
+    print('Waiting for 5 minutes.\n')
     time.sleep(5 * 60)  # wait 5 minute
